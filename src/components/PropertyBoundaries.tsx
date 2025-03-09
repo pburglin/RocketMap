@@ -58,9 +58,10 @@ const PropertyBoundaries: React.FC = () => {
   // Load the parcel index file only when property boundaries are enabled
   useEffect(() => {
     if (mapSettings.showPropertyBoundaries && !indexLoadedRef.current) {
+      const county = 'AZ-Maricopa'; // TODO replace with selected county in Settings screen
       const loadIndex = async () => {
         try {
-          const response = await fetch('/parcels/parcel-index.json');
+          const response = await fetch(`/parcels/${county}/parcel-index.json`);
           if (!response.ok) {
             console.warn('Property boundaries index file not found. Upload parcel data first.');
             return;
@@ -194,7 +195,8 @@ const PropertyBoundaries: React.FC = () => {
           for (const cell of relevantCells) {
             if (!loadedCells.has(cell.filename)) {
               try {
-                const response = await fetch(`/parcels/${cell.filename}`);
+                const county = 'AZ-Maricopa'; // TODO replace with selected county in Settings screen
+                const response = await fetch(`/parcels/${county}/${cell.filename}`);
                 if (!response.ok) continue;
                 
                 const data: ParcelData = await response.json();
