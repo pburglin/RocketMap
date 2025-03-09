@@ -75,40 +75,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Settings">
       <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Map Settings</h2>
-          <button 
-            onClick={onClose}
-            className="p-1 rounded-full hover:bg-gray-200 transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
         
         <div className="space-y-6">
           {/* Map Type */}
           <div>
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
+            <h3 className="text-lg font-semibold mb-2 flex items-center text-black dark:text-white">
               <Map size={18} className="mr-2" />
               Map Type
             </h3>
             <div className="grid grid-cols-3 gap-2">
               <button
-                className={`p-2 rounded border ${mapSettings.mapType === 'streets' ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-300'}`}
+                className={`p-2 rounded border ${mapSettings.mapType === 'streets' ? 'bg-blue-100 border-blue-500 text-black dark:bg-gray-800 dark:text-white' : 'bg-gray-50 border-gray-300 text-black dark:bg-gray-800 dark:text-white'}`}
                 onClick={() => handleMapTypeChange('streets')}
               >
                 Streets
               </button>
               <button
-                className={`p-2 rounded border ${mapSettings.mapType === 'satellite' ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-300'}`}
+                className={`p-2 rounded border ${mapSettings.mapType === 'satellite' ? 'bg-blue-100 border-blue-500 text-black dark:bg-gray-800 dark:text-white' : 'bg-gray-50 border-gray-300 text-black dark:bg-gray-800 dark:text-white'}`}
                 onClick={() => handleMapTypeChange('satellite')}
               >
                 Satellite
               </button>
               <button
-                className={`p-2 rounded border ${mapSettings.mapType === 'topography' ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-300'}`}
+                className={`p-2 rounded border ${mapSettings.mapType === 'topography' ? 'bg-blue-100 border-blue-500 text-black dark:bg-gray-800 dark:text-white' : 'bg-gray-50 border-gray-300 text-black dark:bg-gray-800 dark:text-white'}`}
                 onClick={() => handleMapTypeChange('topography')}
               >
                 Topography
@@ -117,7 +108,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           </div>
           
           {/* Overlays */}
-          <div>
+          <div className="text-black dark:text-white">
             <h3 className="text-lg font-semibold mb-2 flex items-center">
               <Layers size={18} className="mr-2" />
               Overlays
@@ -158,39 +149,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
           </div>
-          
-          {/* Property Data Upload */}
-          <div>
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <Upload size={18} className="mr-2" />
-              Property Data
-            </h3>
-            <p className="text-sm text-gray-600 mb-2">
-              Upload property boundary data (ZIP file containing shapefiles)
-            </p>
-            <div className="flex flex-col space-y-2">
-              <label className="flex items-center justify-center p-2 bg-blue-50 border border-blue-300 rounded cursor-pointer hover:bg-blue-100 transition-colors">
-                <input
-                  type="file"
-                  accept=".zip"
-                  className="hidden"
-                  onChange={handleParcelUpload}
-                />
-                <Upload size={16} className="mr-2" />
-                <span>Select ZIP File</span>
-              </label>
-              
-              {uploadStatus && (
-                <div className="text-sm p-2 bg-gray-50 border rounded">
-                  {uploadStatus}
-                </div>
-              )}
-              
-              <p className="text-xs text-gray-500 italic">
-                Note: For large files, processing may take several minutes.
-              </p>
-            </div>
-          </div>
+
         </div>
       </div>
     </Modal>
