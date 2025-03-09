@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { AppState, Bookmark, UserLocation, UserProfile, MapSettings, ParcelCounty } from '../types';
+import { AppState, Bookmark, UserLocation, UserProfile, MapSettings } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useGeolocation } from '../hooks/useGeolocation';
 
@@ -96,7 +96,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error('Error saving state to localStorage:', err);
     }
-  }, [userLocation, isTrackingLocation, bookmarks, userProfile, mapSettings, setStoredState]);
+  }, [userLocation, isTrackingLocation, bookmarks, userProfile, mapSettings]);
 
   // Toggle location tracking with error handling
   const toggleLocationTracking = useCallback(() => {
