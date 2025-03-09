@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AppState, Bookmark, UserLocation, UserProfile, MapSettings } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -29,8 +29,8 @@ interface AppContextType extends AppState {
   deleteBookmark: (id: string) => void;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
   updateMapSettings: (settings: Partial<MapSettings>) => void;
-  mapCenter: [number, number]; // Add map center to context
-  setMapCenter: (center: [number, number]) => void; // Add setter for map center
+  mapCenter: [number, number];
+  setMapCenter: (center: [number, number]) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -48,58 +48,77 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ...storedState.mapSettings
   });
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(storedState.userLocation);
 
   // Use geolocation hook - only active when tracking is enabled
-  const { location } = useGeolocation(isTrackingLocation);
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(storedState.userLocation);
+  const { location, error } = useGeolocation(isTrackingLocation);
+
+  // Handle location errors
+  useEffect(() => {
+    if (error) {
+      console.warn('Geolocation error:', error);
+      // If there's a persistent error, disable tracking to prevent further issues
+      if (error.includes('denied') || error.includes('unavailable')) {
+        setIsTrackingLocation(false);
+      }
+    }
+  }, [error]);
 
   // Update userLocation when location changes
   useEffect(() => {
-    if (location) {
-      setUserLocation(location);
+    if (location && isTrackingLocation) {
+      try {
+        setUserLocation(location);
+      } catch (err) {
+        console.error('Error updating user location:', err);
+      }
     }
-  }, [location]);
+  }, [location, isTrackingLocation]);
 
   // Save state to localStorage when it changes
   useEffect(() => {
-    setStoredState({
-      userLocation,
-      isTrackingLocation,
-      bookmarks,
-      userProfile,
-      mapSettings
-    });
+    try {
+      setStoredState({
+        userLocation,
+        isTrackingLocation,
+        bookmarks,
+        userProfile,
+        mapSettings
+      });
+    } catch (err) {
+      console.error('Error saving state to localStorage:', err);
+    }
   }, [userLocation, isTrackingLocation, bookmarks, userProfile, mapSettings, setStoredState]);
 
-  // Toggle location tracking
-  const toggleLocationTracking = () => {
+  // Toggle location tracking with error handling
+  const toggleLocationTracking = useCallback(() => {
     setIsTrackingLocation(prev => !prev);
-  };
+  }, []);
 
   // Add bookmark
-  const addBookmark = (bookmark: Omit<Bookmark, 'id' | 'createdAt'>) => {
+  const addBookmark = useCallback((bookmark: Omit<Bookmark, 'id' | 'createdAt'>) => {
     const newBookmark: Bookmark = {
       ...bookmark,
       id: Date.now().toString(),
       createdAt: Date.now()
     };
     setBookmarks(prev => [...prev, newBookmark]);
-  };
+  }, []);
 
   // Delete bookmark
-  const deleteBookmark = (id: string) => {
+  const deleteBookmark = useCallback((id: string) => {
     setBookmarks(prev => prev.filter(bookmark => bookmark.id !== id));
-  };
+  }, []);
 
   // Update user profile
-  const updateUserProfile = (profile: Partial<UserProfile>) => {
+  const updateUserProfile = useCallback((profile: Partial<UserProfile>) => {
     setUserProfile(prev => ({ ...prev, ...profile }));
-  };
+  }, []);
 
   // Update map settings
-  const updateMapSettings = (settings: Partial<MapSettings>) => {
+  const updateMapSettings = useCallback((settings: Partial<MapSettings>) => {
     setMapSettings(prev => ({ ...prev, ...settings }));
-  };
+  }, []);
 
   const value: AppContextType = {
     userLocation,

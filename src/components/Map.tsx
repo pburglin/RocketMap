@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppContext } from '../context/AppContext';
@@ -24,7 +24,11 @@ const LocationUpdater: React.FC<{ center?: [number, number]; zoom?: number; isTr
   useEffect(() => {
     // Only auto-center the map if tracking is enabled and we have a center position
     if (isTracking && center) {
-      map.setView(center, zoom || map.getZoom());
+      try {
+        map.setView(center, zoom || map.getZoom());
+      } catch (err) {
+        console.error('Error updating map view:', err);
+      }
     }
   }, [center, zoom, map, isTracking]);
   
@@ -36,11 +40,17 @@ const MapCenterTracker: React.FC = () => {
   const map = useMap();
   const { setMapCenter } = useAppContext();
   
-  useMapEvents({
-    moveend: () => {
+  const handleMoveEnd = useCallback(() => {
+    try {
       const center = map.getCenter();
       setMapCenter([center.lat, center.lng]);
+    } catch (err) {
+      console.error('Error tracking map center:', err);
     }
+  }, [map, setMapCenter]);
+  
+  useMapEvents({
+    moveend: handleMoveEnd
   });
   
   return null;
@@ -52,40 +62,50 @@ const DirectionIndicator: React.FC<{ position: [number, number]; heading: number
   
   // Create a polygon representing the direction cone
   const createDirectionCone = () => {
-    const [lat, lng] = position;
-    const distance = 0.0003; // Size of the cone
-    
-    // Convert heading to radians
-    const headingRad = (heading * Math.PI) / 180;
-    
-    // Calculate the tip of the cone
-    const tipLat = lat + Math.cos(headingRad) * distance;
-    const tipLng = lng + Math.sin(headingRad) * distance;
-    
-    // Calculate the base points of the cone
-    const baseAngle1 = headingRad - Math.PI / 4;
-    const baseAngle2 = headingRad + Math.PI / 4;
-    
-    const baseLat1 = lat + Math.cos(baseAngle1) * distance * 0.5;
-    const baseLng1 = lng + Math.sin(baseAngle1) * distance * 0.5;
-    
-    const baseLat2 = lat + Math.cos(baseAngle2) * distance * 0.5;
-    const baseLng2 = lng + Math.sin(baseAngle2) * distance * 0.5;
-    
-    return [
-      [lat, lng],
-      [tipLat, tipLng],
-      [baseLat2, baseLng2],
-      [baseLat1, baseLng1],
-      [lat, lng]
-    ] as L.LatLngExpression[];
+    try {
+      const [lat, lng] = position;
+      const distance = 0.0003; // Size of the cone
+      
+      // Convert heading to radians
+      const headingRad = (heading * Math.PI) / 180;
+      
+      // Calculate the tip of the cone
+      const tipLat = lat + Math.cos(headingRad) * distance;
+      const tipLng = lng + Math.sin(headingRad) * distance;
+      
+      // Calculate the base points of the cone
+      const baseAngle1 = headingRad - Math.PI / 4;
+      const baseAngle2 = headingRad + Math.PI / 4;
+      
+      const baseLat1 = lat + Math.cos(baseAngle1) * distance * 0.5;
+      const baseLng1 = lng + Math.sin(baseAngle1) * distance * 0.5;
+      
+      const baseLat2 = lat + Math.cos(baseAngle2) * distance * 0.5;
+      const baseLng2 = lng + Math.sin(baseAngle2) * distance * 0.5;
+      
+      return [
+        [lat, lng],
+        [tipLat, tipLng],
+        [baseLat2, baseLng2],
+        [baseLat1, baseLng1],
+        [lat, lng]
+      ] as L.LatLngExpression[];
+    } catch (err) {
+      console.error('Error creating direction cone:', err);
+      return [[0, 0]] as L.LatLngExpression[]; // Return a fallback
+    }
   };
   
-  const conePositions = createDirectionCone();
-  
-  return (
-    <L.Polygon positions={conePositions} pathOptions={{ color: '#1e40af', fillColor: '#3b82f6', fillOpacity: 0.5 }} />
-  );
+  try {
+    const conePositions = createDirectionCone();
+    
+    return (
+      <L.Polygon positions={conePositions} pathOptions={{ color: '#1e40af', fillColor: '#3b82f6', fillOpacity: 0.5 }} />
+    );
+  } catch (err) {
+    console.error('Error rendering direction indicator:', err);
+    return null;
+  }
 };
 
 interface MapProps {
@@ -95,32 +115,51 @@ interface MapProps {
 const Map: React.FC<MapProps> = ({ focusLocation }) => {
   const { userLocation, isTrackingLocation, mapSettings, bookmarks, mapCenter } = useAppContext();
   const [displayCenter, setDisplayCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
+  const [mapKey, setMapKey] = useState<number>(Date.now()); // Key for forcing re-render
   
   // Update initial display center when component mounts or when focus location changes
   useEffect(() => {
-    if (focusLocation) {
-      setDisplayCenter(focusLocation);
-    } else if (userLocation && isTrackingLocation) {
-      // Only update display center from user location if tracking is enabled
-      setDisplayCenter([userLocation.latitude, userLocation.longitude]);
+    try {
+      if (focusLocation) {
+        setDisplayCenter(focusLocation);
+      } else if (userLocation && isTrackingLocation) {
+        // Only update display center from user location if tracking is enabled
+        setDisplayCenter([userLocation.latitude, userLocation.longitude]);
+      } else if (mapCenter) {
+        // Use the stored map center if available
+        setDisplayCenter(mapCenter);
+      }
+    } catch (err) {
+      console.error('Error updating display center:', err);
     }
-  }, [focusLocation, userLocation, isTrackingLocation]);
+  }, [focusLocation, userLocation, isTrackingLocation, mapCenter]);
 
   // Select tile layer based on map settings
-  const getTileLayer = () => {
-    switch (mapSettings.mapType) {
-      case 'satellite':
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      case 'topography':
-        return 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
-      case 'streets':
-      default:
-        return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const getTileLayer = useCallback(() => {
+    try {
+      switch (mapSettings.mapType) {
+        case 'satellite':
+          return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+        case 'topography':
+          return 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+        case 'streets':
+        default:
+          return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      }
+    } catch (err) {
+      console.error('Error getting tile layer:', err);
+      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'; // Default fallback
     }
-  };
+  }, [mapSettings.mapType]);
+
+  // Force map re-render if tracking state changes
+  useEffect(() => {
+    setMapKey(Date.now());
+  }, [isTrackingLocation]);
 
   return (
     <MapContainer 
+      key={mapKey}
       center={displayCenter} 
       zoom={15} 
       style={{ height: '100vh', width: '100%' }}
