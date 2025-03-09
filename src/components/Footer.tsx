@@ -1,14 +1,15 @@
 import React from 'react';
-import { MapPin, Bookmark, Settings, User } from 'lucide-react';
+import { MapPin, Bookmark, Settings, User, Info } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 interface FooterProps {
   onOpenBookmarks: () => void;
   onOpenSettings: () => void;
   onOpenProfile: () => void;
+  onOpenAbout: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onOpenBookmarks, onOpenSettings, onOpenProfile }) => {
+const Footer: React.FC<FooterProps> = ({ onOpenBookmarks, onOpenSettings, onOpenProfile, onOpenAbout }) => {
   const { isTrackingLocation, toggleLocationTracking } = useAppContext();
   
   return (
@@ -57,6 +58,16 @@ const Footer: React.FC<FooterProps> = ({ onOpenBookmarks, onOpenSettings, onOpen
           >
             <User size={24} />
             <span className="text-xs mt-1 hidden sm:block">Profile</span>
+          </button>
+          
+          {/* About Button */}
+          <button 
+            onClick={onOpenAbout}
+            className="flex flex-col items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="About"
+          >
+            <Info size={24} />
+            <span className="text-xs mt-1 hidden sm:block">About</span>
           </button>
         </div>
       </div>

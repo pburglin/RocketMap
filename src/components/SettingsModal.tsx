@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
-import { Map, Layers, MapPin } from 'lucide-react';
+import React from 'react';
+import { Map, Layers } from 'lucide-react';
 import Modal from './Modal';
-import FAQModal from './FAQModal';
-import TOSModal from './TOSModal';
 import { useAppContext } from '../context/AppContext';
 
 interface SettingsModalProps {
@@ -12,8 +10,6 @@ interface SettingsModalProps {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { mapSettings, updateMapSettings } = useAppContext();
-  const [isFAQOpen, setIsFAQOpen] = useState(false);
-  const [isTOSOpen, setIsTOSOpen] = useState(false);
 
   const handleMapTypeChange = (mapType: 'streets' | 'satellite' | 'topography') => {
     updateMapSettings({ mapType });
@@ -120,28 +116,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
           </div>
-
-          {/* Help & Legal */}
-          <div className="space-y-6 mt-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2 flex items-center text-black dark:text-white">
-                <MapPin size={18} className="mr-2" />
-                Help &amp; Legal
-              </h3>
-              <div className="space-y-2">
-                <button onClick={() => setIsFAQOpen(true)} className="block text-blue-500 hover:underline">
-                  FAQ - How to Use This App
-                </button>
-                <button onClick={() => setIsTOSOpen(true)} className="block text-blue-500 hover:underline">
-                  Terms of Service &amp; Disclaimer
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </Modal>
-      <FAQModal isOpen={isFAQOpen} onClose={() => setIsFAQOpen(false)} />
-      <TOSModal isOpen={isTOSOpen} onClose={() => setIsTOSOpen(false)} />
     </React.Fragment>
   );
 };

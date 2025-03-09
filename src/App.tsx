@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import BookmarksModal from './components/BookmarksModal';
 import SettingsModal from './components/SettingsModal';
 import ProfileModal from './components/ProfileModal';
+import AboutModal from './components/AboutModal';
 import FAQScreen from './components/FAQScreen';
 import TOSScreen from './components/TOSScreen';
 import { AppProvider, useAppContext } from './context/AppContext';
@@ -15,7 +16,7 @@ import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
@@ -29,6 +30,7 @@ const AppContent: React.FC = () => {
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [focusLocation, setFocusLocation] = useState<[number, number] | undefined>(undefined);
 
   // Apply theme based on user preference
@@ -57,6 +59,7 @@ const AppContent: React.FC = () => {
                   onOpenBookmarks={() => setIsBookmarksOpen(true)}
                   onOpenSettings={() => setIsSettingsOpen(true)}
                   onOpenProfile={() => setIsProfileOpen(true)}
+                  onOpenAbout={() => setIsAboutOpen(true)}
                 />
                 
                 {/* Modals */}
@@ -72,6 +75,10 @@ const AppContent: React.FC = () => {
                 <ProfileModal
                   isOpen={isProfileOpen}
                   onClose={() => setIsProfileOpen(false)}
+                />
+                <AboutModal
+                  isOpen={isAboutOpen}
+                  onClose={() => setIsAboutOpen(false)}
                 />
               </>
             } />
