@@ -118,8 +118,8 @@ program
       const grid = createGrid(bounds, gridSize);
       console.log(chalk.yellow(`🔲 Created grid with ${Object.keys(grid).length} cells`));
       
-      // Reset source for second pass
-      source.close();
+      // Reset source for second pass - don't use close() as it's not available
+      // Instead, open a new source for the second pass
       const source2 = await shapefile.open(shpPath);
       
       // Process features and assign to grid cells
