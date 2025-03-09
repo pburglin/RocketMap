@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, MapPin, Crosshair } from 'lucide-react';
+import { Plus, Trash2, MapPin, Crosshair, MapPinned } from 'lucide-react';
 import Modal from './Modal';
 import { useAppContext } from '../context/AppContext';
 
@@ -12,9 +12,12 @@ interface BookmarksModalProps {
 const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSelectBookmark }) => {
   const { bookmarks, addBookmark, deleteBookmark, mapCenter } = useAppContext();
   const [isAddingBookmark, setIsAddingBookmark] = useState(false);
+  const [inputType, setInputType] = useState<'address' | 'coordinates'>('address');
   const [newBookmark, setNewBookmark] = useState({
     title: '',
     location: '',
+    latitude: '',
+    longitude: '',
     description: ''
   });
 
@@ -26,12 +29,10 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
     let longitude = 0;
     
     try {
-      // Try to parse as coordinates (40.7128, -74.0060)
-      const coordsMatch = newBookmark.location.match(/\(?\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)?/);
-      
-      if (coordsMatch) {
-        latitude = parseFloat(coordsMatch[1]);
-        longitude = parseFloat(coordsMatch[2]);
+      if (inputType === 'coordinates') {
+        // Parse direct lat/lng input
+        latitude = parseFloat(newBookmark.latitude);
+        longitude = parseFloat(newBookmark.longitude);
         
         // Validate coordinates
         if (isNaN(latitude) || isNaN(longitude) || 
@@ -40,9 +41,27 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
           throw new Error('Invalid coordinates');
         }
       } else {
-        // For simplicity, we'll just use a placeholder location if not coordinates
-        // In a real app, you would use a geocoding service here
-        throw new Error('Please enter valid coordinates');
+        // Try to parse as coordinates from address field (40.7128, -74.0060)
+        const coordsMatch = newBookmark.location.match(/\(?\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)?/);
+        
+        if (coordsMatch) {
+          latitude = parseFloat(coordsMatch[1]);
+          longitude = parseFloat(coordsMatch[2]);
+          
+          // Validate coordinates
+          if (isNaN(latitude) || isNaN(longitude) || 
+              latitude < -90 || latitude > 90 || 
+              longitude < -180 || longitude > 180) {
+            throw new Error('Invalid coordinates');
+          }
+        } else {
+          // For simplicity, we'll just use a placeholder location if not coordinates
+          // In a real app, you would use a geocoding service here
+          alert('Note: In a real app, this would use a geocoding service to convert the address to coordinates.');
+          // For demo purposes, we'll use a default location (NYC)
+          latitude = 40.7128;
+          longitude = -74.0060;
+        }
       }
       
       addBookmark({
@@ -55,6 +74,8 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
       setNewBookmark({
         title: '',
         location: '',
+        latitude: '',
+        longitude: '',
         description: ''
       });
       
@@ -72,10 +93,18 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
   // Use current map center for location
   const useMapCenter = () => {
     if (mapCenter) {
-      setNewBookmark({
-        ...newBookmark,
-        location: `${mapCenter[0].toFixed(6)}, ${mapCenter[1].toFixed(6)}`
-      });
+      if (inputType === 'coordinates') {
+        setNewBookmark({
+          ...newBookmark,
+          latitude: mapCenter[0].toFixed(6),
+          longitude: mapCenter[1].toFixed(6)
+        });
+      } else {
+        setNewBookmark({
+          ...newBookmark,
+          location: `${mapCenter[0].toFixed(6)}, ${mapCenter[1].toFixed(6)}`
+        });
+      }
     }
   };
 
@@ -109,28 +138,106 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
             </div>
             
             <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Location
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Location Type
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  id="location"
-                  value={newBookmark.location}
-                  onChange={(e) => setNewBookmark({ ...newBookmark, location: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Coordinates (40.7128, -74.0060)"
-                  required
-                />
+              <div className="flex gap-2 mb-3">
                 <button
                   type="button"
-                  onClick={useMapCenter}
-                  className="bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 p-2 rounded-md transition-colors"
-                  title="Use map center"
+                  onClick={() => setInputType('address')}
+                  className={`flex-1 py-2 px-3 rounded-md flex items-center justify-center gap-2 ${
+                    inputType === 'address' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                  }`}
                 >
-                  <Crosshair size={20} className="text-gray-700 dark:text-gray-300" />
+                  <MapPin size={16} />
+                  <span>Address</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInputType('coordinates')}
+                  className={`flex-1 py-2 px-3 rounded-md flex items-center justify-center gap-2 ${
+                    inputType === 'coordinates' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <MapPinned size={16} />
+                  <span>Coordinates</span>
                 </button>
               </div>
+              
+              {inputType === 'address' ? (
+                <div>
+                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Address
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      id="location"
+                      value={newBookmark.location}
+                      onChange={(e) => setNewBookmark({ ...newBookmark, location: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                      placeholder="Enter address or coordinates (40.7128, -74.0060)"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={useMapCenter}
+                      className="bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 p-2 rounded-md transition-colors"
+                      title="Use map center"
+                    >
+                      <Crosshair size={20} className="text-gray-700 dark:text-gray-300" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                      <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Latitude
+                      </label>
+                      <input
+                        type="text"
+                        id="latitude"
+                        value={newBookmark.latitude}
+                        onChange={(e) => setNewBookmark({ ...newBookmark, latitude: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                        placeholder="40.7128"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Longitude
+                      </label>
+                      <input
+                        type="text"
+                        id="longitude"
+                        value={newBookmark.longitude}
+                        onChange={(e) => setNewBookmark({ ...newBookmark, longitude: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                        placeholder="-74.0060"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={useMapCenter}
+                      className="bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 p-2 rounded-md transition-colors flex items-center gap-1 text-sm"
+                      title="Use map center"
+                    >
+                      <Crosshair size={16} className="text-gray-700 dark:text-gray-300" />
+                      <span>My Location</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div>
