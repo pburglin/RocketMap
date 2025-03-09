@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, MapPin } from 'lucide-react';
+import { Plus, Trash2, MapPin, Crosshair } from 'lucide-react';
 import Modal from './Modal';
 import { useAppContext } from '../context/AppContext';
 
@@ -10,7 +10,7 @@ interface BookmarksModalProps {
 }
 
 const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSelectBookmark }) => {
-  const { bookmarks, addBookmark, deleteBookmark } = useAppContext();
+  const { bookmarks, addBookmark, deleteBookmark, mapCenter } = useAppContext();
   const [isAddingBookmark, setIsAddingBookmark] = useState(false);
   const [newBookmark, setNewBookmark] = useState({
     title: '',
@@ -69,6 +69,16 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
     onClose();
   };
 
+  // Use current map center for location
+  const useMapCenter = () => {
+    if (mapCenter) {
+      setNewBookmark({
+        ...newBookmark,
+        location: `${mapCenter[0].toFixed(6)}, ${mapCenter[1].toFixed(6)}`
+      });
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Bookmarks">
       <div className="space-y-4">
@@ -102,15 +112,25 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Location
               </label>
-              <input
-                type="text"
-                id="location"
-                value={newBookmark.location}
-                onChange={(e) => setNewBookmark({ ...newBookmark, location: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
-                placeholder="Coordinates (40.7128, -74.0060)"
-                required
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  id="location"
+                  value={newBookmark.location}
+                  onChange={(e) => setNewBookmark({ ...newBookmark, location: e.target.value })}
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Coordinates (40.7128, -74.0060)"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={useMapCenter}
+                  className="bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 p-2 rounded-md transition-colors"
+                  title="Use map center"
+                >
+                  <Crosshair size={20} className="text-gray-700 dark:text-gray-300" />
+                </button>
+              </div>
             </div>
             
             <div>

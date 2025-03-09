@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useAppContext } from '../context/AppContext';
 import { User, Moon, Sun } from 'lucide-react';
@@ -16,11 +16,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
     theme: userProfile.theme
   });
   
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateUserProfile(formData);
-    onClose();
-  };
+  // Update form data when userProfile changes
+  useEffect(() => {
+    setFormData({
+      username: userProfile.username,
+      avatarUrl: userProfile.avatarUrl || '',
+      theme: userProfile.theme
+    });
+  }, [userProfile]);
+  
+  // Auto-save when form data changes
+  useEffect(() => {
+    // Skip the initial render
+    const isInitialRender = 
+      formData.username === userProfile.username && 
+      formData.avatarUrl === (userProfile.avatarUrl || '') && 
+      formData.theme === userProfile.theme;
+    
+    if (!isInitialRender) {
+      updateUserProfile(formData);
+    }
+  }, [formData, updateUserProfile, userProfile]);
   
   const handleThemeChange = (theme: 'light' | 'dark') => {
     setFormData({ ...formData, theme });
@@ -30,7 +46,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Profile">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         {/* Avatar Preview */}
         <div className="flex justify-center">
           <div className="relative">
@@ -118,16 +134,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
         
-        {/* Submit Button */}
-        <div className="pt-4">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-          >
-            Save Profile
-          </button>
+        {/* Auto-save notice */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+            Changes are saved automatically
+          </p>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 };

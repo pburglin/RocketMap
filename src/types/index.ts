@@ -1,9 +1,10 @@
 export interface UserLocation {
   latitude: number;
   longitude: number;
-  heading?: number | null;
-  timestamp: number;
   accuracy?: number;
+  heading?: number | null;
+  speed?: number | null;
+  timestamp?: number;
 }
 
 export interface Bookmark {
@@ -13,19 +14,20 @@ export interface Bookmark {
     latitude: number;
     longitude: number;
   };
-  description?: string;
+  description: string;
   createdAt: number;
 }
 
 export interface UserProfile {
   username: string;
-  avatarUrl?: string;
+  avatarUrl: string;
   theme: 'light' | 'dark';
 }
 
 export interface MapSettings {
   mapType: 'streets' | 'satellite' | 'topography';
   showPropertyBoundaries: boolean;
+  showBookmarksOverlay: boolean; // New setting for bookmarks overlay
 }
 
 export interface AppState {

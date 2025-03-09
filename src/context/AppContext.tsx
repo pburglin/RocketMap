@@ -11,7 +11,8 @@ const defaultUserProfile: UserProfile = {
 
 const defaultMapSettings: MapSettings = {
   mapType: 'streets',
-  showPropertyBoundaries: false
+  showPropertyBoundaries: false,
+  showBookmarksOverlay: true // Default to showing bookmarks
 };
 
 const defaultState: AppState = {
@@ -28,6 +29,8 @@ interface AppContextType extends AppState {
   deleteBookmark: (id: string) => void;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
   updateMapSettings: (settings: Partial<MapSettings>) => void;
+  mapCenter: [number, number]; // Add map center to context
+  setMapCenter: (center: [number, number]) => void; // Add setter for map center
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -40,7 +43,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isTrackingLocation, setIsTrackingLocation] = useState<boolean>(storedState.isTrackingLocation);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(storedState.bookmarks);
   const [userProfile, setUserProfile] = useState<UserProfile>(storedState.userProfile);
-  const [mapSettings, setMapSettings] = useState<MapSettings>(storedState.mapSettings);
+  const [mapSettings, setMapSettings] = useState<MapSettings>({
+    ...defaultMapSettings,
+    ...storedState.mapSettings
+  });
+  const [mapCenter, setMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
 
   // Use geolocation hook
   const { location } = useGeolocation(isTrackingLocation);
@@ -104,7 +111,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addBookmark,
     deleteBookmark,
     updateUserProfile,
-    updateMapSettings
+    updateMapSettings,
+    mapCenter,
+    setMapCenter
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

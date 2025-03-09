@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppContext } from '../context/AppContext';
 
@@ -15,6 +15,7 @@ const createIcon = (color: string) => {
 
 const blueIcon = createIcon('#1e40af');
 const grayIcon = createIcon('#6b7280');
+const bookmarkIcon = createIcon('#ef4444'); // Red icon for bookmarks
 
 // Component to update map view when location changes
 const LocationUpdater: React.FC<{ center?: [number, number]; zoom?: number }> = ({ center, zoom }) => {
@@ -25,6 +26,21 @@ const LocationUpdater: React.FC<{ center?: [number, number]; zoom?: number }> = 
       map.setView(center, zoom || map.getZoom());
     }
   }, [center, zoom, map]);
+  
+  return null;
+};
+
+// Component to track map center
+const MapCenterTracker: React.FC = () => {
+  const map = useMap();
+  const { setMapCenter } = useAppContext();
+  
+  useMapEvents({
+    moveend: () => {
+      const center = map.getCenter();
+      setMapCenter([center.lat, center.lng]);
+    }
+  });
   
   return null;
 };
@@ -76,15 +92,15 @@ interface MapProps {
 }
 
 const Map: React.FC<MapProps> = ({ focusLocation }) => {
-  const { userLocation, isTrackingLocation, mapSettings } = useAppContext();
-  const [mapCenter, setMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
+  const { userLocation, isTrackingLocation, mapSettings, bookmarks, mapCenter, setMapCenter } = useAppContext();
+  const [displayCenter, setDisplayCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
   
   // Update map center when user location changes or focus location is provided
   useEffect(() => {
     if (focusLocation) {
-      setMapCenter(focusLocation);
+      setDisplayCenter(focusLocation);
     } else if (userLocation) {
-      setMapCenter([userLocation.latitude, userLocation.longitude]);
+      setDisplayCenter([userLocation.latitude, userLocation.longitude]);
     }
   }, [userLocation, focusLocation]);
 
@@ -103,7 +119,7 @@ const Map: React.FC<MapProps> = ({ focusLocation }) => {
 
   return (
     <MapContainer 
-      center={mapCenter} 
+      center={displayCenter} 
       zoom={15} 
       style={{ height: '100vh', width: '100%' }}
       zoomControl={false}
@@ -155,8 +171,27 @@ const Map: React.FC<MapProps> = ({ focusLocation }) => {
         </>
       )}
       
+      {/* Bookmarks markers (if overlay is enabled) */}
+      {mapSettings.showBookmarksOverlay && bookmarks.map(bookmark => (
+        <Marker
+          key={bookmark.id}
+          position={[bookmark.location.latitude, bookmark.location.longitude]}
+          icon={bookmarkIcon}
+        >
+          <Popup>
+            <strong>{bookmark.title}</strong><br />
+            {bookmark.description && <>{bookmark.description}<br /></>}
+            Lat: {bookmark.location.latitude.toFixed(6)}<br />
+            Lng: {bookmark.location.longitude.toFixed(6)}
+          </Popup>
+        </Marker>
+      ))}
+      
       {/* Update map view when location changes */}
       <LocationUpdater center={focusLocation || (userLocation ? [userLocation.latitude, userLocation.longitude] : undefined)} />
+      
+      {/* Track map center */}
+      <MapCenterTracker />
     </MapContainer>
   );
 };

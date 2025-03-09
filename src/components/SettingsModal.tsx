@@ -1,7 +1,7 @@
 import React from 'react';
 import Modal from './Modal';
 import { useAppContext } from '../context/AppContext';
-import { Layers, Home } from 'lucide-react';
+import { Layers, Home, MapPin } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -106,25 +106,55 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
         
-        {/* Property Boundaries Toggle */}
-        <div className="flex items-center justify-between">
-          <label htmlFor="property-boundaries" className="text-gray-700 dark:text-gray-300">
-            Show Property Boundaries
-          </label>
-          <div className="relative inline-block w-10 mr-2 align-middle select-none">
-            <input
-              type="checkbox"
-              id="property-boundaries"
-              checked={mapSettings.showPropertyBoundaries}
-              onChange={() => updateMapSettings({ showPropertyBoundaries: !mapSettings.showPropertyBoundaries })}
-              className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-            />
-            <label
-              htmlFor="property-boundaries"
-              className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${
-                mapSettings.showPropertyBoundaries ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-              }`}
-            ></label>
+        {/* Map Overlay Settings */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-800 dark:text-white flex items-center gap-2 mb-3">
+            <MapPin size={20} />
+            Map Overlays
+          </h3>
+          
+          {/* Property Boundaries Toggle */}
+          <div className="flex items-center justify-between mb-3">
+            <label htmlFor="property-boundaries" className="text-gray-700 dark:text-gray-300">
+              Show Property Boundaries
+            </label>
+            <div className="relative inline-block w-10 mr-2 align-middle select-none">
+              <input
+                type="checkbox"
+                id="property-boundaries"
+                checked={mapSettings.showPropertyBoundaries}
+                onChange={() => updateMapSettings({ showPropertyBoundaries: !mapSettings.showPropertyBoundaries })}
+                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+              />
+              <label
+                htmlFor="property-boundaries"
+                className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${
+                  mapSettings.showPropertyBoundaries ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              ></label>
+            </div>
+          </div>
+          
+          {/* Bookmarks Overlay Toggle */}
+          <div className="flex items-center justify-between">
+            <label htmlFor="bookmarks-overlay" className="text-gray-700 dark:text-gray-300">
+              Show Bookmarks on Map
+            </label>
+            <div className="relative inline-block w-10 mr-2 align-middle select-none">
+              <input
+                type="checkbox"
+                id="bookmarks-overlay"
+                checked={mapSettings.showBookmarksOverlay}
+                onChange={() => updateMapSettings({ showBookmarksOverlay: !mapSettings.showBookmarksOverlay })}
+                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+              />
+              <label
+                htmlFor="bookmarks-overlay"
+                className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${
+                  mapSettings.showBookmarksOverlay ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              ></label>
+            </div>
           </div>
         </div>
         
