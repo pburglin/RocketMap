@@ -77,6 +77,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   >
                     <option value="">None selected</option>
                     <option value="AZ-Maricopa">Arizona / Maricopa County</option>
+                    <option value="AZ-Navajo">Arizona / Navajo County</option>
                     {/* Future options will be added here */}
                   </select>
                 </div>

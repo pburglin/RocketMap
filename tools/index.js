@@ -92,7 +92,7 @@ program
         }
         
         // Update bounds
-        if (feature.value.geometry.type === 'Polygon' || feature.value.geometry.type === 'MultiPolygon') {
+        if (feature.value.geometry && (feature.value.geometry.type === 'Polygon' || feature.value.geometry.type === 'MultiPolygon')) {
           const coordinates = feature.value.geometry.type === 'Polygon' 
             ? [feature.value.geometry.coordinates] 
             : feature.value.geometry.coordinates;
