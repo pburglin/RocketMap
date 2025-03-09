@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { AppState, Bookmark, UserLocation, UserProfile, MapSettings } from '../types';
+import { AppState, Bookmark, UserLocation, UserProfile, MapSettings, ParcelCounty } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useGeolocation } from '../hooks/useGeolocation';
 
@@ -12,7 +12,8 @@ const defaultUserProfile: UserProfile = {
 const defaultMapSettings: MapSettings = {
   mapType: 'streets',
   showPropertyBoundaries: false,
-  showBookmarksOverlay: true // Default to showing bookmarks
+  showBookmarksOverlay: true, // Default to showing bookmarks
+  parcelCounty: null // Default to no county selected
 };
 
 const defaultState: AppState = {

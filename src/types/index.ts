@@ -27,8 +27,11 @@ export interface UserProfile {
 export interface MapSettings {
   mapType: 'streets' | 'satellite' | 'topography';
   showPropertyBoundaries: boolean;
-  showBookmarksOverlay: boolean; // New setting for bookmarks overlay
+  showBookmarksOverlay: boolean;
+  parcelCounty: ParcelCounty | null; // Add parcelCounty to map settings
 }
+
+export type ParcelCounty = 'AZ-Maricopa' | null;
 
 export interface AppState {
   userLocation: UserLocation | null;

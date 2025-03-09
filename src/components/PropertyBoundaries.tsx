@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useMap } from 'react-leaflet';
-import L from 'leaflet';
+import L, { GeoJSON, GeoJsonObject } from 'leaflet';
 import { useAppContext } from '../context/AppContext';
 
 interface ParcelIndex {
@@ -26,7 +26,7 @@ interface ParcelIndex {
 
 interface ParcelFeature {
   type: string;
-  geometry: any;
+  geometry: object;
   properties: {
     APN?: string;
     StreetNumb?: string;
@@ -35,7 +35,7 @@ interface ParcelFeature {
     StreetDir?: string;
     City?: string;
     ZipCode?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -46,19 +46,19 @@ interface ParcelData {
 
 const PropertyBoundaries: React.FC = () => {
   const map = useMap();
-  const { mapSettings } = useAppContext();
+  const { mapSettings, updateMapSettings } = useAppContext();
   const [parcelIndex, setParcelIndex] = useState<ParcelIndex | null>(null);
   const [loadedCells, setLoadedCells] = useState<Set<string>>(new Set());
-  const parcelLayerRef = useRef<L.GeoJSON | null>(null);
+  const parcelLayerRef = useRef<L.GeoJSON<GeoJsonObject> | null>(null);
   const indexLoadedRef = useRef<boolean>(false);
   const isLoadingRef = useRef<boolean>(false);
   const lastBoundsRef = useRef<string>('');
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<number | null>(null);
 
-  // Load the parcel index file only when property boundaries are enabled
+  // Load the parcel index file only when property boundaries are enabled and county is selected
   useEffect(() => {
-    if (mapSettings.showPropertyBoundaries && !indexLoadedRef.current) {
-      const county = 'AZ-Maricopa'; // TODO replace with selected county in Settings screen
+    if (mapSettings.showPropertyBoundaries && mapSettings.parcelCounty && !indexLoadedRef.current) {
+      const county = mapSettings.parcelCounty;
       const loadIndex = async () => {
         try {
           const response = await fetch(`/parcels/${county}/parcel-index.json`);
@@ -75,15 +75,18 @@ const PropertyBoundaries: React.FC = () => {
       };
 
       loadIndex();
+    } else if (!mapSettings.parcelCounty) {
+      // If no county selected, turn off property boundaries
+      updateMapSettings({ showPropertyBoundaries: false });
     }
-  }, [mapSettings.showPropertyBoundaries]);
+  }, [mapSettings.showPropertyBoundaries, mapSettings.parcelCounty, updateMapSettings]);
 
   // Create or remove GeoJSON layer based on settings
   useEffect(() => {
-    if (mapSettings.showPropertyBoundaries) {
+    if (mapSettings.showPropertyBoundaries && mapSettings.parcelCounty) {
       // Create layer if it doesn't exist
       if (!parcelLayerRef.current) {
-        const layer = L.geoJSON([], {
+        const layer = L.geoJSON<GeoJsonObject>([], {
           style: {
             color: '#ff6b6b',
             weight: 1,
@@ -93,7 +96,7 @@ const PropertyBoundaries: React.FC = () => {
           },
           onEachFeature: (feature, layer) => {
             if (feature.properties) {
-              const props = feature.properties;
+              const props = feature.properties as ParcelFeature['properties']; // Type assertion here
               let popupContent = '<div class="parcel-popup">';
               
               if (props.APN) {
@@ -156,7 +159,7 @@ const PropertyBoundaries: React.FC = () => {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [map, mapSettings.showPropertyBoundaries]);
+  }, [map, mapSettings.showPropertyBoundaries, mapSettings.parcelCounty, updateMapSettings]);
 
   // Load parcel data when map moves, with debounce
   useEffect(() => {
@@ -195,7 +198,7 @@ const PropertyBoundaries: React.FC = () => {
           for (const cell of relevantCells) {
             if (!loadedCells.has(cell.filename)) {
               try {
-                const county = 'AZ-Maricopa'; // TODO replace with selected county in Settings screen
+                const county = mapSettings.parcelCounty;
                 const response = await fetch(`/parcels/${county}/${cell.filename}`);
                 if (!response.ok) continue;
                 
@@ -203,7 +206,7 @@ const PropertyBoundaries: React.FC = () => {
                 
                 // Only add data if layer still exists (user might have disabled during fetch)
                 if (parcelLayerRef.current && mapSettings.showPropertyBoundaries) {
-                  parcelLayerRef.current.addData(data);
+                  parcelLayerRef.current.addData(data as GeoJsonObject);
                   
                   // Mark cell as loaded
                   setLoadedCells(prev => new Set([...prev, cell.filename]));
@@ -233,8 +236,8 @@ const PropertyBoundaries: React.FC = () => {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [map, parcelIndex, loadedCells, mapSettings.showPropertyBoundaries]);
-  
+  }, [map, parcelIndex, loadedCells, mapSettings.showPropertyBoundaries, mapSettings.parcelCounty, updateMapSettings]);
+
   // Helper function to determine which grid cells to load based on map bounds
   const getGridCellsForBounds = (
     index: ParcelIndex,

@@ -7,7 +7,7 @@ interface GeolocationOptions {
   maximumAge: number;
 }
 
-export function useGeolocation(isTracking: boolean, interval: number = 10000) {
+export function useGeolocation(isTracking: boolean, interval: number = 15000) {
   const [location, setLocation] = useState<UserLocation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<string>('prompt');
@@ -192,7 +192,7 @@ export function useGeolocation(isTracking: boolean, interval: number = 10000) {
         console.error('Failed to initialize location tracking:', err);
         setError('Failed to initialize location tracking');
       }
-    }, 300); // Small delay to avoid iOS rendering issues
+    }, 500); // Small delay to avoid iOS rendering issues
     
     // Cleanup function
     return () => {
