@@ -2,7 +2,7 @@
 
 A modern, interactive property mapping Progressive Web Application built with React, TypeScript, and Leaflet.
 
-![RocketMaps Screenshot](https://via.placeholder.com/800x450?text=RocketMaps+Screenshot)
+![RocketMaps Screenshot](https://github.com/pburglin/RocketMap/blob/8b60f1f637fa9d617401b9f3540447ed4a4d3374/public/rocketmap.png?raw=true)
 
 ## 📱 Features
 
