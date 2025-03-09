@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppContext } from '../context/AppContext';
+import PropertyBoundaries from './PropertyBoundaries';
 
 // Custom marker icons
 const createIcon = (color: string) => {
@@ -143,12 +144,7 @@ const Map: React.FC<MapProps> = ({ focusLocation }) => {
       />
       
       {/* Property boundaries layer (if enabled) */}
-      {mapSettings.showPropertyBoundaries && (
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/Specialty/DeLorme_World_Base_Map/MapServer/tile/{z}/{y}/{x}"
-          opacity={0.5}
-        />
-      )}
+      {mapSettings.showPropertyBoundaries && <PropertyBoundaries />}
       
       {/* User location marker */}
       {userLocation && (

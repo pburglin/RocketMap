@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { X, Map, Layers, MapPin, Upload } from 'lucide-react';
 import Modal from './Modal';
 import { useAppContext } from '../context/AppContext';
-import { Layers, Home, MapPin } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,200 +10,189 @@ interface SettingsModalProps {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { mapSettings, updateMapSettings } = useAppContext();
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   
-  // Check if the device supports PWA installation
-  const [canInstall, setCanInstall] = React.useState(false);
-  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
-  
-  React.useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
-      e.preventDefault();
-      // Stash the event so it can be triggered later
-      setDeferredPrompt(e);
-      // Update UI to notify the user they can install the PWA
-      setCanInstall(true);
-    };
-    
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-  
-  const handleInstallClick = () => {
-    if (!deferredPrompt) return;
-    
-    // Show the install prompt
-    deferredPrompt.prompt();
-    
-    // Wait for the user to respond to the prompt
-    deferredPrompt.userChoice.then((choiceResult: { outcome: string }) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      // Clear the saved prompt since it can't be used again
-      setDeferredPrompt(null);
-      setCanInstall(false);
-    });
+  const handleMapTypeChange = (mapType: 'streets' | 'satellite' | 'topography') => {
+    updateMapSettings({ mapType });
   };
   
+  const handlePropertyBoundariesToggle = () => {
+    updateMapSettings({ showPropertyBoundaries: !mapSettings.showPropertyBoundaries });
+  };
+  
+  const handleBookmarksOverlayToggle = () => {
+    updateMapSettings({ showBookmarksOverlay: !mapSettings.showBookmarksOverlay });
+  };
+  
+  const handleParcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Only accept zip files
+    if (!file.name.endsWith('.zip')) {
+      setUploadStatus('Error: Please upload a ZIP file containing GIS data');
+      return;
+    }
+    
+    setUploadStatus('Uploading file...');
+    
+    try {
+      // Create a FormData object to send the file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // In a real app, you would upload this to your server
+      // For this demo, we'll just simulate success after a delay
+      setTimeout(() => {
+        setUploadStatus('Upload complete! Processing will be done on the server.');
+        
+        // In a real implementation, you would process the file on the server
+        // and then enable the property boundaries feature
+        setTimeout(() => {
+          updateMapSettings({ showPropertyBoundaries: true });
+          setUploadStatus(null);
+        }, 2000);
+      }, 1500);
+      
+      // In a real app, you would do something like this:
+      /*
+      const response = await fetch('/api/upload-parcels', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const data = await response.json();
+      setUploadStatus(`Upload complete! ${data.message}`);
+      */
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setUploadStatus('Error uploading file. Please try again.');
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Settings">
-      <div className="space-y-6">
-        {/* Map Type Settings */}
-        <div>
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white flex items-center gap-2 mb-3">
-            <Layers size={20} />
-            Map Layers
-          </h3>
-          
-          <div className="space-y-3">
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="streets"
-                name="mapType"
-                checked={mapSettings.mapType === 'streets'}
-                onChange={() => updateMapSettings({ mapType: 'streets' })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="streets" className="ml-2 block text-gray-700 dark:text-gray-300">
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Map Settings</h2>
+          <button 
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-gray-200 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="space-y-6">
+          {/* Map Type */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2 flex items-center">
+              <Map size={18} className="mr-2" />
+              Map Type
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                className={`p-2 rounded border ${mapSettings.mapType === 'streets' ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-300'}`}
+                onClick={() => handleMapTypeChange('streets')}
+              >
                 Streets
-              </label>
-            </div>
-            
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="satellite"
-                name="mapType"
-                checked={mapSettings.mapType === 'satellite'}
-                onChange={() => updateMapSettings({ mapType: 'satellite' })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="satellite" className="ml-2 block text-gray-700 dark:text-gray-300">
+              </button>
+              <button
+                className={`p-2 rounded border ${mapSettings.mapType === 'satellite' ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-300'}`}
+                onClick={() => handleMapTypeChange('satellite')}
+              >
                 Satellite
-              </label>
-            </div>
-            
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="topography"
-                name="mapType"
-                checked={mapSettings.mapType === 'topography'}
-                onChange={() => updateMapSettings({ mapType: 'topography' })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="topography" className="ml-2 block text-gray-700 dark:text-gray-300">
+              </button>
+              <button
+                className={`p-2 rounded border ${mapSettings.mapType === 'topography' ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-300'}`}
+                onClick={() => handleMapTypeChange('topography')}
+              >
                 Topography
-              </label>
-            </div>
-          </div>
-        </div>
-        
-        {/* Map Overlay Settings */}
-        <div>
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white flex items-center gap-2 mb-3">
-            <MapPin size={20} />
-            Map Overlays
-          </h3>
-          
-          {/* Property Boundaries Toggle */}
-          <div className="flex items-center justify-between mb-3">
-            <label htmlFor="property-boundaries" className="text-gray-700 dark:text-gray-300">
-              Show Property Boundaries
-            </label>
-            <div className="relative inline-block w-10 mr-2 align-middle select-none">
-              <input
-                type="checkbox"
-                id="property-boundaries"
-                checked={mapSettings.showPropertyBoundaries}
-                onChange={() => updateMapSettings({ showPropertyBoundaries: !mapSettings.showPropertyBoundaries })}
-                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-              />
-              <label
-                htmlFor="property-boundaries"
-                className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${
-                  mapSettings.showPropertyBoundaries ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              ></label>
+              </button>
             </div>
           </div>
           
-          {/* Bookmarks Overlay Toggle */}
-          <div className="flex items-center justify-between">
-            <label htmlFor="bookmarks-overlay" className="text-gray-700 dark:text-gray-300">
-              Show Bookmarks on Map
-            </label>
-            <div className="relative inline-block w-10 mr-2 align-middle select-none">
-              <input
-                type="checkbox"
-                id="bookmarks-overlay"
-                checked={mapSettings.showBookmarksOverlay}
-                onChange={() => updateMapSettings({ showBookmarksOverlay: !mapSettings.showBookmarksOverlay })}
-                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-              />
-              <label
-                htmlFor="bookmarks-overlay"
-                className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${
-                  mapSettings.showBookmarksOverlay ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              ></label>
-            </div>
-          </div>
-        </div>
-        
-        {/* PWA Installation */}
-        {canInstall && (
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-            <div className="flex items-start gap-3">
-              <Home size={24} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-gray-800 dark:text-white">Add to Home Screen</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                  Install RocketMaps on your device for quick access and offline capabilities.
-                </p>
-                <button
-                  onClick={handleInstallClick}
-                  className="mt-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
-                >
-                  Install App
-                </button>
+          {/* Overlays */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2 flex items-center">
+              <Layers size={18} className="mr-2" />
+              Overlays
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center cursor-pointer">
+                  <span>Show Property Boundaries</span>
+                </label>
+                <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={mapSettings.showPropertyBoundaries}
+                    onChange={handlePropertyBoundariesToggle}
+                    className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                  />
+                  <label 
+                    className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${mapSettings.showPropertyBoundaries ? 'bg-blue-500' : 'bg-gray-300'}`}
+                  ></label>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <label className="flex items-center cursor-pointer">
+                  <span>Show Bookmarks on Map</span>
+                </label>
+                <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={mapSettings.showBookmarksOverlay}
+                    onChange={handleBookmarksOverlayToggle}
+                    className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                  />
+                  <label 
+                    className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${mapSettings.showBookmarksOverlay ? 'bg-blue-500' : 'bg-gray-300'}`}
+                  ></label>
+                </div>
               </div>
             </div>
           </div>
-        )}
-        
-        {/* App Info */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            RocketMaps v0.1.0
-          </p>
+          
+          {/* Property Data Upload */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2 flex items-center">
+              <Upload size={18} className="mr-2" />
+              Property Data
+            </h3>
+            <p className="text-sm text-gray-600 mb-2">
+              Upload property boundary data (ZIP file containing shapefiles)
+            </p>
+            <div className="flex flex-col space-y-2">
+              <label className="flex items-center justify-center p-2 bg-blue-50 border border-blue-300 rounded cursor-pointer hover:bg-blue-100 transition-colors">
+                <input
+                  type="file"
+                  accept=".zip"
+                  className="hidden"
+                  onChange={handleParcelUpload}
+                />
+                <Upload size={16} className="mr-2" />
+                <span>Select ZIP File</span>
+              </label>
+              
+              {uploadStatus && (
+                <div className="text-sm p-2 bg-gray-50 border rounded">
+                  {uploadStatus}
+                </div>
+              )}
+              
+              <p className="text-xs text-gray-500 italic">
+                Note: For large files, processing may take several minutes.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <style jsx>{`
-        .toggle-checkbox:checked {
-          right: 0;
-          border-color: #3b82f6;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-          background-color: #3b82f6;
-        }
-        .toggle-label {
-          transition: background-color 0.2s ease;
-        }
-        .toggle-checkbox {
-          right: 0;
-          z-index: 1;
-          transition: all 0.2s ease;
-        }
-      `}</style>
     </Modal>
   );
 };

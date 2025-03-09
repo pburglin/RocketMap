@@ -1,0 +1,20 @@
+{
+  "name": "gis-processing-tool",
+  "version": "1.0.0",
+  "description": "Tool for processing GIS property boundary files",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "commander": "^11.1.0",
+    "geojson-validation": "^1.0.2",
+    "shapefile": "^0.6.6",
+    "fs-extra": "^11.1.1",
+    "progress": "^2.0.3",
+    "chalk": "^5.3.0",
+    "proj4": "^2.9.0"
+  }
+}
