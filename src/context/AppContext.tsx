@@ -31,6 +31,7 @@ interface AppContextType extends AppState {
   updateMapSettings: (settings: Partial<MapSettings>) => void;
   mapCenter: [number, number];
   setMapCenter: (center: [number, number]) => void;
+  locationPermissionState: string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -49,14 +50,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
   const [userLocation, setUserLocation] = useState<UserLocation | null>(storedState.userLocation);
+  const [locationPermissionState, setLocationPermissionState] = useState<string>('prompt');
 
   // Use geolocation hook - only active when tracking is enabled
-  const { location, error } = useGeolocation(isTrackingLocation);
+  const { location, error, permissionState } = useGeolocation(isTrackingLocation);
+
+  // Update permission state
+  useEffect(() => {
+    setLocationPermissionState(permissionState);
+  }, [permissionState]);
 
   // Handle location errors
   useEffect(() => {
     if (error) {
-      console.warn('Geolocation error:', error);
+      console.warn('Geolocation error in context:', error);
       // If there's a persistent error, disable tracking to prevent further issues
       if (error.includes('denied') || error.includes('unavailable')) {
         setIsTrackingLocation(false);
@@ -132,7 +139,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateUserProfile,
     updateMapSettings,
     mapCenter,
-    setMapCenter
+    setMapCenter,
+    locationPermissionState
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
