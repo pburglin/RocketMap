@@ -131,7 +131,7 @@ const Map: React.FC<MapProps> = ({ focusLocation }) => {
       key={mapKey} // Force re-render when key changes
       center={displayCenter} 
       zoom={15} 
-      style={{ height: '100vh', width: '100%' }}
+      style={{ height: '100vh', width: '100%', zIndex: 0 }}
       zoomControl={false}
       attributionControl={true}
       fadeAnimation={true}
