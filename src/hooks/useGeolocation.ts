@@ -101,6 +101,13 @@ export function useGeolocation(isTracking: boolean, interval: number = 15000) {
     }
   }, [isTracking]);
 
+  // Detect iOS device
+  const isIOS = useRef<boolean>(
+    typeof navigator !== 'undefined' && 
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+  ).current;
+
   // Setup and teardown location tracking
   useEffect(() => {
     // Check permission state on mount
@@ -123,7 +130,10 @@ export function useGeolocation(isTracking: boolean, interval: number = 15000) {
       return;
     }
     
-    // Delay the initial location request slightly to avoid iOS rendering issues
+    // Use a longer delay for iOS devices to avoid rendering issues
+    const delayTime = isIOS ? 1500 : 500;
+    
+    // Delay the initial location request to avoid iOS rendering issues
     const initTimer = setTimeout(() => {
       if (!isMountedRef.current) return;
       
@@ -192,7 +202,7 @@ export function useGeolocation(isTracking: boolean, interval: number = 15000) {
         console.error('Failed to initialize location tracking:', err);
         setError('Failed to initialize location tracking');
       }
-    }, 500); // Small delay to avoid iOS rendering issues
+    }, delayTime); // Longer delay for iOS devices to avoid rendering issues
     
     // Cleanup function
     return () => {

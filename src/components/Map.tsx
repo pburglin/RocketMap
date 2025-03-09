@@ -51,41 +51,20 @@ const MapCenterTracker: React.FC = () => {
 const DirectionIndicator: React.FC<{ position: [number, number]; heading: number | null | undefined }> = ({ position, heading }) => {
   if (heading === null || heading === undefined) return null;
   
-  // Create a polygon representing the direction cone
-  const createDirectionCone = () => {
-    const [lat, lng] = position;
-    const distance = 0.0003; // Size of the cone
-    
-    // Convert heading to radians
-    const headingRad = (heading * Math.PI) / 180;
-    
-    // Calculate the tip of the cone
-    const tipLat = lat + Math.cos(headingRad) * distance;
-    const tipLng = lng + Math.sin(headingRad) * distance;
-    
-    // Calculate the base points of the cone
-    const baseAngle1 = headingRad - Math.PI / 4;
-    const baseAngle2 = headingRad + Math.PI / 4;
-    
-    const baseLat1 = lat + Math.cos(baseAngle1) * distance * 0.5;
-    const baseLng1 = lng + Math.sin(baseAngle1) * distance * 0.5;
-    
-    const baseLat2 = lat + Math.cos(baseAngle2) * distance * 0.5;
-    const baseLng2 = lng + Math.sin(baseAngle2) * distance * 0.5;
-    
-    return [
-      [lat, lng],
-      [tipLat, tipLng],
-      [baseLat2, baseLng2],
-      [baseLat1, baseLng1],
-      [lat, lng]
-    ] as L.LatLngExpression[];
-  };
+  // Direction cone implementation temporarily disabled due to compatibility issues with iOS
   
-  const conePositions = createDirectionCone();
-  
+  // Use Circle as a simpler direction indicator for now
   return (
-    <L.Polygon positions={conePositions} pathOptions={{ color: '#1e40af', fillColor: '#3b82f6', fillOpacity: 0.5 }} />
+    <Circle 
+      center={position}
+      radius={1} // Minimal radius, just to have something
+      pathOptions={{ 
+        color: '#1e40af', 
+        fillColor: '#3b82f6', 
+        fillOpacity: 0.5,
+        weight: 0 
+      }}
+    />
   );
 };
 
@@ -94,14 +73,29 @@ interface MapProps {
 }
 
 const Map: React.FC<MapProps> = ({ focusLocation }) => {
-  const { userLocation, isTrackingLocation, mapSettings, bookmarks, mapCenter, locationPermissionState } = useAppContext();
+  const { userLocation, isTrackingLocation, mapSettings, bookmarks, locationPermissionState } = useAppContext();
   const [displayCenter, setDisplayCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
   const [mapKey, setMapKey] = useState<number>(1); // Used to force re-render the map
   
-  // Force map re-render when permission state changes to fix iOS black screen issue
+  // Detect iOS device
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  
+  // Enhanced fix for iOS black screen issue
   useEffect(() => {
+    // Force map re-render when permission state changes
     setMapKey(prev => prev + 1);
-  }, [locationPermissionState]);
+    
+    // For iOS devices, add additional handling
+    if (isIOS && locationPermissionState === 'granted') {
+      // Add a small delay before re-rendering again to ensure iOS has fully processed permission change
+      const timer = setTimeout(() => {
+        setMapKey(prev => prev + 1);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [locationPermissionState, isIOS]);
   
   // Update initial display center when component mounts or when focus location changes
   useEffect(() => {
