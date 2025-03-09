@@ -18,14 +18,15 @@ const grayIcon = createIcon('#6b7280');
 const bookmarkIcon = createIcon('#ef4444'); // Red icon for bookmarks
 
 // Component to update map view when location changes
-const LocationUpdater: React.FC<{ center?: [number, number]; zoom?: number }> = ({ center, zoom }) => {
+const LocationUpdater: React.FC<{ center?: [number, number]; zoom?: number; isTracking: boolean }> = ({ center, zoom, isTracking }) => {
   const map = useMap();
   
   useEffect(() => {
-    if (center) {
+    // Only auto-center the map if tracking is enabled and we have a center position
+    if (isTracking && center) {
       map.setView(center, zoom || map.getZoom());
     }
-  }, [center, zoom, map]);
+  }, [center, zoom, map, isTracking]);
   
   return null;
 };
@@ -92,17 +93,18 @@ interface MapProps {
 }
 
 const Map: React.FC<MapProps> = ({ focusLocation }) => {
-  const { userLocation, isTrackingLocation, mapSettings, bookmarks, mapCenter, setMapCenter } = useAppContext();
+  const { userLocation, isTrackingLocation, mapSettings, bookmarks, mapCenter } = useAppContext();
   const [displayCenter, setDisplayCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
   
-  // Update map center when user location changes or focus location is provided
+  // Update initial display center when component mounts or when focus location changes
   useEffect(() => {
     if (focusLocation) {
       setDisplayCenter(focusLocation);
-    } else if (userLocation) {
+    } else if (userLocation && isTrackingLocation) {
+      // Only update display center from user location if tracking is enabled
       setDisplayCenter([userLocation.latitude, userLocation.longitude]);
     }
-  }, [userLocation, focusLocation]);
+  }, [focusLocation, userLocation, isTrackingLocation]);
 
   // Select tile layer based on map settings
   const getTileLayer = () => {
@@ -187,8 +189,11 @@ const Map: React.FC<MapProps> = ({ focusLocation }) => {
         </Marker>
       ))}
       
-      {/* Update map view when location changes */}
-      <LocationUpdater center={focusLocation || (userLocation ? [userLocation.latitude, userLocation.longitude] : undefined)} />
+      {/* Update map view when location changes - only if tracking is enabled */}
+      <LocationUpdater 
+        center={focusLocation || (userLocation && isTrackingLocation ? [userLocation.latitude, userLocation.longitude] : undefined)} 
+        isTracking={isTrackingLocation || !!focusLocation}
+      />
       
       {/* Track map center */}
       <MapCenterTracker />

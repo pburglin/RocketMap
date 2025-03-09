@@ -49,7 +49,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
 
-  // Use geolocation hook
+  // Use geolocation hook - only active when tracking is enabled
   const { location } = useGeolocation(isTrackingLocation);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(storedState.userLocation);
 

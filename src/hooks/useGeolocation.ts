@@ -45,44 +45,47 @@ export function useGeolocation(isTracking: boolean, interval: number = 10000) {
   }, []);
 
   useEffect(() => {
-    // Get initial location
+    // Only get location if tracking is enabled
+    if (!isTracking) {
+      return;
+    }
+    
+    // Get initial location when tracking is enabled
     updateLocation();
 
-    // Set up tracking if enabled
+    // Set up tracking
     let watchId: number | null = null;
     let intervalId: number | null = null;
 
-    if (isTracking) {
-      // For continuous updates (direction changes, etc.)
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const { coords, timestamp } = position;
-          
-          setLocation({
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-            heading: coords.heading,
-            accuracy: coords.accuracy,
-            timestamp
-          });
-          
-          setError(null);
-        },
-        (error) => {
-          setError(error.message);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
+    // For continuous updates (direction changes, etc.)
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { coords, timestamp } = position;
+        
+        setLocation({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          heading: coords.heading,
+          accuracy: coords.accuracy,
+          timestamp
+        });
+        
+        setError(null);
+      },
+      (error) => {
+        setError(error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
 
-      // For periodic updates on a timer
-      intervalId = window.setInterval(() => {
-        updateLocation();
-      }, interval);
-    }
+    // For periodic updates on a timer
+    intervalId = window.setInterval(() => {
+      updateLocation();
+    }, interval);
 
     // Cleanup
     return () => {
