@@ -29,6 +29,7 @@ export interface MapSettings {
   showPropertyBoundaries: boolean;
   showBookmarksOverlay: boolean;
   parcelCounty: ParcelCounty | null; // Add parcelCounty to map settings
+  gpsRefreshInterval: number; // GPS refresh interval in milliseconds
 }
 
 export type ParcelCounty = 'AZ-Maricopa' | null;

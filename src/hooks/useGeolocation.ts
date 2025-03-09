@@ -7,7 +7,7 @@ interface GeolocationOptions {
   maximumAge: number;
 }
 
-export function useGeolocation(isTracking: boolean, interval: number = 15000) {
+export function useGeolocation(isTracking: boolean, interval: number = 30000) {
   const [location, setLocation] = useState<UserLocation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<string>('prompt');

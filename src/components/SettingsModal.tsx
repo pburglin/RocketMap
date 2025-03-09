@@ -1,5 +1,5 @@
-import React from 'react';
-import { Map, Layers } from 'lucide-react';
+import React, { useState } from 'react';
+import { Map, Layers, Clock } from 'lucide-react';
 import Modal from './Modal';
 import { useAppContext } from '../context/AppContext';
 
@@ -10,6 +10,17 @@ interface SettingsModalProps {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { mapSettings, updateMapSettings } = useAppContext();
+  const [sliderValue, setSliderValue] = useState(mapSettings.gpsRefreshInterval / 1000);
+  
+  // Convert slider value (seconds) to display text
+  const formatIntervalDisplay = (seconds: number) => {
+    if (seconds < 60) {
+      return `${seconds} seconds`;
+    } else {
+      const minutes = Math.floor(seconds / 60);
+      return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+    }
+  };
 
   const handleMapTypeChange = (mapType: 'streets' | 'satellite' | 'topography') => {
     updateMapSettings({ mapType });
@@ -22,12 +33,42 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const handleBookmarksOverlayToggle = () => {
     updateMapSettings({ showBookmarksOverlay: !mapSettings.showBookmarksOverlay });
   };
+  
+  const handleGpsIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const seconds = parseInt(e.target.value, 10);
+    setSliderValue(seconds);
+    updateMapSettings({ gpsRefreshInterval: seconds * 1000 });
+  };
 
   return (
     <React.Fragment>
       <Modal isOpen={isOpen} onClose={onClose} title="Settings">
         <div className="p-4">
           <div className="space-y-6">
+            {/* GPS Refresh Interval */}
+            <div className="text-black dark:text-white">
+              <h3 className="text-lg font-semibold mb-2 flex items-center">
+                <Clock size={18} className="mr-2" />
+                GPS Refresh Interval
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>10 seconds</span>
+                  <span>{formatIntervalDisplay(sliderValue)}</span>
+                  <span>10 minutes</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="600"
+                  step="5"
+                  value={sliderValue}
+                  onChange={handleGpsIntervalChange}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                />
+              </div>
+            </div>
+            
             {/* Map Type */}
             <div>
               <h3 className="text-lg font-semibold mb-2 flex items-center text-black dark:text-white">

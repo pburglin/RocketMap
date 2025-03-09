@@ -85,6 +85,14 @@ const AboutScreen: React.FC = () => {
           &nbsp;
           Discover new routes to explore with your motorcycle.
         </div>
+        <div className="space-y-2 block">
+          * <a href="https://sitecheck.us" target="_blank" className="text-blue-500 hover:underline">
+            https://SiteCheck.us
+          </a>
+          &nbsp;
+          Track website availability status, check SSL certificates and more.
+        </div>
+        
       </div>
     </div>
       <FAQModal isOpen={isFAQOpen} onClose={() => setIsFAQOpen(false)} />

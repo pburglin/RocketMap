@@ -13,7 +13,8 @@ const defaultMapSettings: MapSettings = {
   mapType: 'streets',
   showPropertyBoundaries: false,
   showBookmarksOverlay: true, // Default to showing bookmarks
-  parcelCounty: null // Default to no county selected
+  parcelCounty: null, // Default to no county selected
+  gpsRefreshInterval: 30000 // Default to 30 seconds (30000 ms)
 };
 
 const defaultState: AppState = {
@@ -54,7 +55,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [locationPermissionState, setLocationPermissionState] = useState<string>('prompt');
 
   // Use geolocation hook - only active when tracking is enabled
-  const { location, error, permissionState } = useGeolocation(isTrackingLocation);
+  const { location, error, permissionState } = useGeolocation(isTrackingLocation, mapSettings.gpsRefreshInterval);
 
   // Update permission state
   useEffect(() => {
