@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Map from './components/Map';
 import Footer from './components/Footer';
 import BookmarksModal from './components/BookmarksModal';
 import SettingsModal from './components/SettingsModal';
 import ProfileModal from './components/ProfileModal';
+import FAQScreen from './components/FAQScreen';
+import TOSScreen from './components/TOSScreen';
 import { AppProvider, useAppContext } from './context/AppContext';
 import 'leaflet/dist/leaflet.css';
 
@@ -37,44 +40,52 @@ const AppContent: React.FC = () => {
     setFocusLocation([lat, lng]);
   };
 
-  return (
-    <div className="h-screen w-screen overflow-hidden bg-gray-100 dark:bg-gray-900">
-      {/* Map Component */}
-      <Map focusLocation={focusLocation} />
-      
-      {/* Footer Navigation */}
-      <Footer 
-        onOpenBookmarks={() => setIsBookmarksOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenProfile={() => setIsProfileOpen(true)}
-      />
-      
-      {/* Modals */}
-      <BookmarksModal 
-        isOpen={isBookmarksOpen} 
-        onClose={() => setIsBookmarksOpen(false)}
-        onSelectBookmark={handleSelectBookmark}
-      />
-      
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)}
-      />
-      
-      <ProfileModal 
-        isOpen={isProfileOpen} 
-        onClose={() => setIsProfileOpen(false)}
-      />
-    </div>
-  );
-};
-
-const App: React.FC = () => {
-  return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
-  );
-};
-
+  
+    return (
+      <Router>
+        <div className="h-screen w-screen overflow-hidden bg-gray-100 dark:bg-gray-900">
+          <Routes>
+            <Route path="/faq" element={<FAQScreen />} />
+            <Route path="/tos" element={<TOSScreen />} />
+            <Route path="/" element={
+              <>
+                {/* Map Component */}
+                <Map focusLocation={focusLocation} />
+                
+                {/* Footer Navigation */}
+                <Footer
+                  onOpenBookmarks={() => setIsBookmarksOpen(true)}
+                  onOpenSettings={() => setIsSettingsOpen(true)}
+                  onOpenProfile={() => setIsProfileOpen(true)}
+                />
+                
+                {/* Modals */}
+                <BookmarksModal
+                  isOpen={isBookmarksOpen}
+                  onClose={() => setIsBookmarksOpen(false)}
+                  onSelectBookmark={handleSelectBookmark}
+                />
+                <SettingsModal
+                  isOpen={isSettingsOpen}
+                  onClose={() => setIsSettingsOpen(false)}
+                />
+                <ProfileModal
+                  isOpen={isProfileOpen}
+                  onClose={() => setIsProfileOpen(false)}
+                />
+              </>
+            } />
+          </Routes>
+        </div>
+      </Router>
+    );
+  };
+  
+  const App: React.FC = () => {
+    return (
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    );
+  };
 export default App;
