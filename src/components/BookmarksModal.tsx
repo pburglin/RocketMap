@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, MapPin, Crosshair, MapPinned } from 'lucide-react';
 import Modal from './Modal';
 import { useAppContext } from '../context/AppContext';
+import { useGeocoding } from '../lib/useGeocoding';
 
 interface BookmarksModalProps {
   isOpen: boolean;
@@ -11,8 +12,10 @@ interface BookmarksModalProps {
 
 const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSelectBookmark }) => {
   const { bookmarks, addBookmark, deleteBookmark, mapCenter } = useAppContext();
+  const { getCoordinates, loading } = useGeocoding();
   const [isAddingBookmark, setIsAddingBookmark] = useState(false);
   const [inputType, setInputType] = useState<'address' | 'coordinates'>('address');
+  const [geocodingError, setGeocodingError] = useState<string | null>(null);
   const [newBookmark, setNewBookmark] = useState({
     title: '',
     location: '',
@@ -21,8 +24,9 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
     description: ''
   });
 
-  const handleAddBookmark = (e: React.FormEvent) => {
+  const handleAddBookmark = async (e: React.FormEvent) => {
     e.preventDefault();
+    setGeocodingError(null);
     
     // Parse location string to get coordinates
     let latitude = 0;
@@ -55,12 +59,15 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
             throw new Error('Invalid coordinates');
           }
         } else {
-          // For simplicity, we'll just use a placeholder location if not coordinates
-          // In a real app, you would use a geocoding service here
-          alert('Note: In a real app, this would use a geocoding service to convert the address to coordinates.');
-          // For demo purposes, we'll use a default location (NYC)
-          latitude = 40.7128;
-          longitude = -74.0060;
+          // Use geocoding service to convert address to coordinates
+          const result = await getCoordinates(newBookmark.location);
+          
+          if (!result) {
+            throw new Error('Could not geocode this address. Please try again or enter coordinates directly.');
+          }
+          
+          latitude = result.lat;
+          longitude = result.lon;
         }
       }
       
@@ -81,7 +88,7 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
       
       setIsAddingBookmark(false);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Invalid location format');
+      setGeocodingError(error instanceof Error ? error.message : 'Invalid location format');
     }
   };
 
@@ -253,11 +260,18 @@ const BookmarksModal: React.FC<BookmarksModalProps> = ({ isOpen, onClose, onSele
               />
             </div>
             
+            {geocodingError && (
+              <div className="text-red-500 text-sm mt-2 mb-2">
+                {geocodingError}
+              </div>
+            )}
+            
             <button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              disabled={loading}
             >
-              Save Bookmark
+              {loading ? 'Geocoding...' : 'Save Bookmark'}
             </button>
           </form>
         )}
