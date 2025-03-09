@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppContext } from '../context/AppContext';
 import PropertyBoundaries from './PropertyBoundaries';
@@ -132,7 +132,7 @@ const Map: React.FC<MapProps> = ({ focusLocation }) => {
       center={displayCenter} 
       zoom={15} 
       style={{ height: '100vh', width: '100%', zIndex: 0 }}
-      zoomControl={false}
+      zoomControl={false} // Disable default zoom control, we'll add our own
       attributionControl={true}
       fadeAnimation={true}
       markerZoomAnimation={true}
@@ -142,6 +142,9 @@ const Map: React.FC<MapProps> = ({ focusLocation }) => {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url={getTileLayer()}
       />
+      
+      {/* Add zoom control */}
+      <ZoomControl position="topleft" />
       
       {/* Property boundaries layer (if enabled) */}
       {mapSettings.showPropertyBoundaries && <PropertyBoundaries />}
