@@ -170,7 +170,7 @@ export async function writeGridFiles(grid, outputDir) {
 }
 
 /**
- * Create an index file for the grid
+ * Create or update an index file for the grid
  * @param {Object} grid - Grid object
  * @param {string} outputDir - Output directory
  * @param {string} indexName - Name of the index file
@@ -189,20 +189,55 @@ export async function createIndexFile(grid, outputDir, indexName, gridSize) {
       return acc;
     }, {});
   
-  // Create index object
+  const indexPath = path.join(outputDir, indexName);
+  let existingIndex = {};
+  let existingCells = {};
+  let totalExistingFeatures = 0;
+  
+  // Check if index file already exists
+  try {
+    if (await fs.pathExists(indexPath)) {
+      console.log(chalk.yellow(`Index file already exists, appending new data...`));
+      existingIndex = await fs.readJson(indexPath);
+      existingCells = existingIndex.cells || {};
+      totalExistingFeatures = existingIndex.metadata?.totalFeatures || 0;
+    }
+  } catch (error) {
+    console.log(chalk.yellow(`Error reading existing index file: ${error.message}`));
+    console.log(chalk.yellow(`Creating new index file...`));
+  }
+  
+  // Merge existing cells with new cells
+  const mergedCells = { ...existingCells, ...nonEmptyCells };
+  
+  // Calculate total features (existing + new)
+  const newFeatures = Object.values(nonEmptyCells).reduce((sum, cell) => sum + cell.featureCount, 0);
+  const totalFeatures = totalExistingFeatures + newFeatures;
+  
+  // Create updated index object
   const index = {
     gridSize,
-    cells: nonEmptyCells,
+    cells: mergedCells,
     metadata: {
-      totalCells: Object.keys(nonEmptyCells).length,
-      totalFeatures: Object.values(nonEmptyCells).reduce((sum, cell) => sum + cell.featureCount, 0),
-      generatedAt: new Date().toISOString()
+      totalCells: Object.keys(mergedCells).length,
+      totalFeatures: totalFeatures,
+      lastUpdated: new Date().toISOString(),
+      ...(existingIndex.metadata?.generatedAt && { generatedAt: existingIndex.metadata.generatedAt })
     }
   };
   
-  // Write index file
-  const indexPath = path.join(outputDir, indexName);
+  // If this is a new index, add the generatedAt timestamp
+  if (!existingIndex.metadata?.generatedAt) {
+    index.metadata.generatedAt = index.metadata.lastUpdated;
+  }
+  
+  // Write updated index file
   await fs.writeJson(indexPath, index, { spaces: 2 });
   
-  console.log(chalk.green(`Created index with ${index.metadata.totalCells} cells containing ${index.metadata.totalFeatures} features`));
+  if (existingIndex.metadata) {
+    console.log(chalk.green(`Updated index with ${Object.keys(nonEmptyCells).length} new cells containing ${newFeatures} features`));
+    console.log(chalk.green(`Total: ${index.metadata.totalCells} cells containing ${index.metadata.totalFeatures} features`));
+  } else {
+    console.log(chalk.green(`Created index with ${index.metadata.totalCells} cells containing ${index.metadata.totalFeatures} features`));
+  }
 }
