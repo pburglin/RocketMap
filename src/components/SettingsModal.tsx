@@ -108,13 +108,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <div className="flex flex-col">
                   <label className="mb-2">Select State / County</label>
                   <select
-                    className="p-2 rounded border text-black dark:text-white dark:bg-gray-800"
+                    className="p-2 rounded border text-black bg-gray-100 dark:text-white dark:bg-gray-800"
                     value={mapSettings.parcelCounty || ''}
                     onChange={(e) => updateMapSettings({ parcelCounty: e.target.value as 'AZ-Maricopa' })}
                   >
                     <option value="">None selected</option>
-                    <option value="AZ-Maricopa">Arizona / Maricopa County</option>
-                    <option value="AZ-Navajo">Arizona / Navajo County</option>
+                    <option value="AZ-4G-LTE">Arizona / 4G LTE Coverage (March 2025)</option>
+                    <option value="AZ-Maricopa">Arizona / Maricopa County Properties</option>
+                    <option value="AZ-Navajo">Arizona / Navajo County Properties</option>
                     {/* Future options will be added here */}
                   </select>
                 </div>
@@ -122,7 +123,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 {/* Show Property Boundaries Toggle */}
                 <div className="flex items-center justify-between">
                   <label className="flex items-center cursor-pointer">
-                    <span>Show Property Boundaries</span>
+                    <span>Show Overlay</span>
                   </label>
                   <div className="relative inline-block w-10 mr-2 align-middle select-none">
                     <input
